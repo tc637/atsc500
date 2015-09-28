@@ -55,7 +55,7 @@ def hist2d(x_raw,y_raw,x_edges,y_edges):
                counts as a [20,10]  array with the number of measurements that fall
                into each bin
     """
-    print('in numba 5')
+    print('in numba 6')
     x_centers=(x_edges[:-1] + x_edges[1:])/2.
     y_centers=(y_edges[:-1] + y_edges[1:])/2.
     num_xbins=int(len(x_centers))
