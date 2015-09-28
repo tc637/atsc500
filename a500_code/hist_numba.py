@@ -23,7 +23,6 @@ def fill_counts(row_centers,col_centers,row_indices,col_indices):
     num_rowbins=row_centers.shape[0]
     hist_array=np.zeros([num_rowbins, num_colbins], dtype=np.float)
     num_y=row_indices.shape[0]
-    num_x=col_indices.shape[0]
     for n in range(num_y): #row_indices and col_indices both size of raw data
         if col_indices[n] > 0 and row_indices[n] > 0 and \
             col_indices[n] <= num_colbins and row_indices[n] <= num_rowbins:
