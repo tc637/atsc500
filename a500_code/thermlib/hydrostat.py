@@ -5,7 +5,7 @@
 """
 
 import numpy as N
-from .thermconst import RD,g
+from thermlib.thermconst import RD,g
 
 def hydrostat(sound):
     """in: sounding dictionary with required keys
@@ -24,8 +24,16 @@ def hydrostat(sound):
     return height
 
 if __name__== '__main__':
-    from . import readsound
-    soundDict=readsound.readsound("sound.dat")
+    import thermlib,os
+    from thermlib.readsound import readsound
+    
+    datapath=thermlib.__file__.split(os.sep)[:-1]
+    soundfile = datapath.copy()
+    soundfile.extend(['testdata','sound.dat'])
+    print(soundfile)
+    soundfile = os.sep.join(soundfile)
+    soundDict=readsound(soundfile)
+
     height=hydrostat(soundDict)
     print("height: ",height)
 
