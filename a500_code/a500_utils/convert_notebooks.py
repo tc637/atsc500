@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 """
-   convert all ipython notebooks to python scripts
+   convert all ipython notebooks to python scripts (first time)
+   convert all new or modified notebooks (subsequently)
+
+   usage:
+
+   ./convert_notebooks.py  notebook_folder
+
+   result:
+
+      notebook_folder/python  contains the converted notebooks
 """
 
 import os
@@ -37,6 +46,9 @@ def find_modtime(the_file):
     # convert every date to UTC
     #
     the_date = the_date.astimezone(pytz.utc)
+    #
+    # remove everything but the root filename
+    #
     head = head.split('/')[-1] 
     return head,the_date
 
@@ -45,7 +57,7 @@ if __name__ == "__main__":
     linebreaks=argparse.RawTextHelpFormatter
     descrip=textwrap.dedent(globals()['__doc__'])
     parser = argparse.ArgumentParser(formatter_class=linebreaks,description=descrip)
-    parser.add_argument('--folder','-f',type=str,help='folder containing ipython file',default='.')
+    parser.add_argument('--folder','-f',type=str,help='folder containing ipynb files (default current directory)',default='.')
     args=parser.parse_args()
     try:
         currdir=os.getcwd()
@@ -63,10 +75,6 @@ if __name__ == "__main__":
         #
         notebooklist=glob.glob('*.ipynb')
         pythonlist=glob.glob('./python/*.py')
-        #
-        # remove the /python/ from the name
-        #
-
         #
         #  build two dictionaries containing the root names and the modtimes
         #
@@ -103,7 +111,7 @@ if __name__ == "__main__":
             out=subprocess.getstatusoutput(command)
             print(out)
         #
-        # now go through notebooks once more, converting all that are newer than there python files
+        # now go through notebooks once more, converting all that are newer than their python files
         #
         pythonlist=glob.glob('./python/*.py')
         for the_file in pythonlist:
@@ -118,10 +126,16 @@ if __name__ == "__main__":
                 command=cmdstring.format(the_root)
                 out=subprocess.getstatusoutput(command)
                 print(out)
+    #
+    # trap all exceptions and print a traceback
+    #
     except Exception as e:
          ex_type, ex_val, tb = sys.exc_info()
          print('bummer: ',ex_val)
          print('\nhere is the traceback:\n')
          traceback.print_tb(tb)
+    #
+    # make sure we get back to the original folder
+    #
     finally:
         os.chdir(currdir)

@@ -37,7 +37,9 @@ def calcmixture(sounding):
     outDict={'sm':sm,'hm':hm,'qm':qm,'qlm':qlm,'throm':throm,'throi':thv[mlev],'dens':dens}
     return outDict
 
-def main():
+
+
+if __name__ == "__main__":
     #input the sounding
     datapath=thermlib.__file__.split(os.sep)[:-1]
     soundfile = datapath.copy()
@@ -45,6 +47,9 @@ def main():
     print(soundfile)
     soundfile = os.sep.join(soundfile)
     soundDict=readsound(soundfile)
+    th=soundDict['thetaK']; p=soundDict['pkPa'];
+    q =soundDict['wvKgkg']; gz=soundDict['heightM']*tc.g;
+
     mixout=calcmixture(soundDict)
     xvals=mixout["sm"]
     yvals=mixout["hm"]
@@ -86,6 +91,4 @@ def main():
     plt.show()
     plt.savefig('mix.png',dpi=300)
 
-if __name__ == "__main__":
-    main()
     
