@@ -270,7 +270,11 @@ def t_uos_thetal(thetal,rt,p):
     Thigh=340.
     t1=optimize.zeros.brenth(findDiffTthetal, Tlow, Thigh, (thetal,rt, p));
     result={}
-    rs1=rs_tp(t1,p); 
+    rs1=rs_tp(t1,p)
+    try:
+        rs1=rs1[0]
+    except:
+        pass
     if   (rt>rs1):
         result["T"]=t1; result["RL"]=rt-rs1; result["X"]=1;result["RV"]=rs1
     else:
