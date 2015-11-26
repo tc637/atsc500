@@ -17,17 +17,14 @@ underline is given and the string after the second underline indicates
 the approximation name.
 
 """
-
 import numpy as np
 from . import thermconst as tc
 from .thermconst import LV0,CPD
 import textwrap
 import sys
+from a500_utils.helpers import test_scalar
 
 def alt_thetal(press,Temp,qt):
-    press=np.atleast_1d(press)
-    Temp=np.atleast_1d(Temp)
-    qt=np.atleast_1d(qt)
     qsat=qs_tp(Temp,press)
     ql=qt - qsat
     ql[ql < 0]=0.
@@ -39,17 +36,20 @@ def alt_thetal(press,Temp,qt):
 
 def thetal(press,Temp,rt):
     """
-    press in kPa
-    #p. 121  4.5.15
+    input: press in kPa  (1d vector or scalar)
+           temp in K  (1d vector or scalar
+           mixing ratio in kg/kg  (1d vector or scalar)
+    # emanuel p. 121  4.5.15
     """
+    isscalar = test_scalar(press,Temp,rt)
     press=np.atleast_1d(press)
     Temp=np.atleast_1d(Temp)
-    rt=np.atleast_1d(rt)
+    rt = np.atleast_1d(rt)
+    rl=np.empty_like(rt)
     rsat=rs_tp(Temp,press)
     CPn=tc.RD + rt*tc.RV
     chi=CPn/(tc.CPD + rt*tc.CPV)
     gamma=(rt*tc.RV)/CPn
-    rl=np.empty(rt.shape,dtype=np.float)
     saturated=rt > rsat
     rl[saturated]=rt[saturated] - rsat[saturated]
     unsaturated=np.logical_not(saturated)
@@ -61,6 +61,8 @@ def thetal(press,Temp,rt):
     term3= -LV*rl/(CPn*Temp)
     term3=np.exp(term3)
     theThetal=theta*term1*term2*term3
+    if isscalar:
+        theThetal = theThetal[0]
     return theThetal
 
 def theta(T, p):
@@ -108,6 +110,19 @@ def rs_tp(Temp,press):
     result = tc.EPS*theEs/(press-theEs);
     return result
 
+def dqs_dt(temp,p):
+   """in: temp=temperature (K),p= pressure (kPa)
+      out: derivive of the vapor pressure wrt temperature
+           (kPa/K)
+   """
+   lv=L_t(temp)
+   qs=qs_tp(temp,p)
+   dqsdt = qs*lv/(tc.Rv*temp**2)
+   return dqsdt
+   
+    
+      
+
 def qs_tp(t,p):
     """in: t=temperature (K),p= pressure (kPa)
        out:rs=saturation specific humidity (kg/kg)
@@ -124,7 +139,7 @@ def t_thpr(th,p,r):
     th=np.asarray(th)
     p=np.asarray(p)
     r=np.asarray(r)
-    Rp=tc.RD*(1.+r*tc.EPSI)/(1.+r)
+    Rp=tc.RD*(1.+r/tc.EPS)/(1.+r)
     CPp=tc.CPD*(1.+r*(tc.CPV/tc.CPD))/(1.+r)
     result=th * (p/tc.P0)**(Rp/CPp)
     return result
@@ -146,12 +161,14 @@ def thv_tvp(tv,p):
 def tro_trtp(t,rt,pressKpa):
     """in: t=temperature (K),pressKpa= pressure (kPa)
            rt=mixing ratio (kg/kg)
-       out:tro=density temperature (K)
+       out:tro=density temperature (K)  (vector)
     """
-    t=np.atleast_1d(t)
-    rt=np.atleast_1d(rt)
-    rv=np.atleast_1d(rt)
-    pressKpa=np.atleast_1d(pressKpa)
+    isscalar = test_scalar(t,rt,pressKpa)
+    if not isscalar:
+        t=np.atleast_1d(t)
+        rt=np.atleast_1d(rt)
+        rv=np.empty_like(rt)
+        pressKpa=np.atleast_1d(pressKpa)
     rs=rs_tp(t,pressKpa)
     out=np.empty(rs.shape,dtype=np.float)
     saturated = (rt>=rs)
@@ -164,10 +181,11 @@ def tro_trtp(t,rt,pressKpa):
     out[saturated]=t[saturated]*(1.+0.611*rs[saturated]-rl[saturated])
     out[unsaturated]=t[unsaturated]*(1.+ 0.611*rt[unsaturated])
     out=t*(1 + rv/tc.EPS)/(1. + rt)
+    if isscalar:
+        out=out[0]
     return out
 
 from scipy import optimize
-
 
 def findDiffT(Tguess,htarget,rtTarget,press,gzval):
     rsat=rs_tp(Tguess,press)
@@ -241,7 +259,6 @@ def t_uos_thetal(thetal,rt,p):
        out:dictionary with t, ql and x
        Emanuel p. 123, 4.5.25
     """
-    print(type(rt))
     Tlow=230.
     Thigh=340.
     t1=optimize.zeros.brenth(findDiffTthetal, Tlow, Thigh, (thetal,rt, p));
@@ -252,8 +269,6 @@ def t_uos_thetal(thetal,rt,p):
     else:
         result["T"]=t1; result["RL"]=0.0;    result["X"]=0;result["RV"]=rt
     return result
-
-
 
 def sat_line(h,p,gz):
     """find rtList that is exactly saturated at static energy

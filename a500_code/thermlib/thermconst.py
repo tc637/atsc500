@@ -11,4 +11,4 @@ P0=100         #reference pressure for potential temperature(kPa)
 CPVMCL=CL-CPV  #derived constant
 EPS=RD/RV      #derived constant
 RDOCP=RD/CPD   #derived constant
-EPSI=1./EPS    #derived constant
+EPSI=1./EPS - 1.    #derived constant for Tv
